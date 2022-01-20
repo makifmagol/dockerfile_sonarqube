@@ -1,0 +1,16 @@
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS builder
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y openjdk-11-jdk
+RUN dotnet tool install --global dotnet-sonarscanner
+ENV PATH="$PATH:/root/.dotnet/tools"
+
+RUN dotnet sonarscanner begin /k:${PROJECT_ID} /d:sonar.host.url=${SONAR_HOST} /d:sonar.login=${TOKEN} /d:sonar.scm.provider="git"
+
+COPY . ./
+
+RUN dotnet restore
+RUN dotnet build -c Release --no-restore
+
+RUN dotnet sonarscanner end /d:sonar.login=${TOKEN}
